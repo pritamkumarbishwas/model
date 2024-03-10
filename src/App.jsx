@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './App.css';
 
 const App = () => {
   const [showModal, setShowModal] = useState(false);
+  const modalRef = useRef(null);
+
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -17,6 +19,10 @@ const App = () => {
 
   const closeModal = () => {
     setShowModal(false);
+    resetForm();
+  };
+
+  const resetForm = () => {
     setFormData({
       username: '',
       email: '',
@@ -26,33 +32,37 @@ const App = () => {
     setFormErrors({});
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        closeModal();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const handleChange = (e) => {
     const { id, value } = e.target;
-    setFormData({
-      ...formData,
+    setFormData(prevState => ({
+      ...prevState,
       [id]: value
-    });
+    }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const errors = validateForm(formData);
     if (Object.keys(errors).length === 0) {
-      // Submit form data
       alert('Form submitted successfully!');
       closeModal();
     } else {
       setFormErrors(errors);
-      if (errors.email) {
-        alert(errors.email);
-      }
-      if (errors.phone) {
-        alert(errors.phone);
-      }
-      if (errors.dob) {
-        alert(errors.dob);
-      }
-    
+      Object.values(errors).forEach(error => alert(error));
     }
   };
 
@@ -75,7 +85,7 @@ const App = () => {
       <button onClick={openModal}>Open Form</button>
       {showModal && (
         <div className="modal">
-          <div className="modal-content">
+          <div className="modal-content" ref={modalRef}>
             <span className="close" onClick={closeModal}>&times;</span>
             <form onSubmit={handleSubmit}>
               <div>
